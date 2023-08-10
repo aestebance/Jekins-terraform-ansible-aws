@@ -1,5 +1,4 @@
 Ansible Jenkins Master, sample playbook - jenkins-master-sample.yml
----
 - hosts: "{{ passed_in_hosts }}"
   become: yes
   remote_user: ec2-user
