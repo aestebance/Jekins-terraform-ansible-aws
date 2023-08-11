@@ -41,8 +41,6 @@ keyed_groups:
     prefix: 'security_groups'
 
 hostnames:
-# a list in order of precedence for hostname variables.
-# 
   - ip-address
   - dns-name
   - tag:Name
