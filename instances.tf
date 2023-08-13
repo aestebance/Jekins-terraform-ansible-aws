@@ -72,16 +72,17 @@ ansible-playbook --extra-vars 'passed_in_hosts=tag_Name_${self.tags.Name} master
 EOF
   }
 
-  # provisioner "remote-exec" {
-  #   when = destroy
-  #   inline = [
-  #     "java -jar /home/ec2-user/jenkins-cli.jar -auth @/home/ec2-user/jenkins_auth -s http://${cat /home/ec2-user/master_ip.txt}:8080 delete-node ${self.private_ip}"
-  #   ]
-  #   connection {
-  #     type        = "ssh"
-  #     user        = "ec2-user"
-  #     private_key = file("~/.ssh/id_rsa")
-  #     host        = self.public_ip
-  #   }
-  # }
+  provisioner "remote-exec" {
+    when = destroy
+    inline = [
+      "MASTER_IP=$(cat /home/ec2-user/master_ip)",
+      "java -jar /home/ec2-user/jenkins-cli.jar -auth @/home/ec2-user/jenkins_auth -s http://$MASTER_IP:8080 delete-node ${self.private_ip} > output.log 2>&1"
+    ]
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file("~/.ssh/id_rsa")
+      host        = self.public_ip
+    }
+  }
 }
