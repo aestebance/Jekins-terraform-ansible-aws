@@ -4,56 +4,96 @@
   remote_user: ec2-user
   become_user: root
   tasks:
-    - name: install dependencies
+    - name: 1/15 - Update Yum
+      yum:
+        update_cache: yes
+    
+    - name: 2/15 - Install updates
+      yum:
+        name: "*"
+        state: latest
+
+    - name: 3/15 - install dependencies
       yum:
         name: "{{ package }}"
         state: present
       vars:
         package:
-          - wget
-          - java-1.8.0-openjdk-devel
-          - git
-    - name: Clone preconfigured Jenkins files
+        - wget
+        - git
+        - maven
+        - docker
+
+    - name: 4/15 - Start docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    
+    - name: 5/15 - install JDK 11
+      command: amazon-linux-extras install java-openjdk11 -y
+
+    - name: 6/15 - download Jenkins config
       git:
-        repo: https://github.com/linuxacademy/content-terraform-jenkins.git
+        repo: https://github.com/aestebance/jenkins-default-config.git
         dest: /tmp/jenkins
-    - name: Setup Jenkins repo
+
+    - name: 7/15 - Setup Jenkins Repo
       get_url:
         url: https://pkg.jenkins.io/redhat/jenkins.repo
         dest: /etc/yum.repos.d/jenkins.repo
-    - name: Import Jenkins Repo GPG key
+    
+    - name: 8/15 - Import Jenkins Repo GPG key
       rpm_key:
         state: present
-        key: https://pkg.jenkins.io/redhat/jenkins.io.key
-    - name: install Jenkins
+        key: https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+ 
+    - name: 9/15 - install Jenkins
       yum:
         name: jenkins
         state: present
-    - name: Temporaly Stop Jenkins
-      service:
-        name: jenkins
+
+    - name: 10/15 - Temporarily Stop Jenkins
+      service: 
+        name: jenkins 
         state: stopped
-    - name: Delete Jenkins default dir
-      file:
-        state: absent
-        path: /var/lib/jenkins
-    - name: Copy over cloned Jenkins /var/lib/jenkins
+   
+    - name: 11/15 - Modify user shell
+      user:
+        name: jenkins
+        shell: /bin/bash
+    
+    
+    # - name: 9/13 - Delete Jenkins default dir
+    #   file:
+    #     state: absent
+    #     path: /var/lib/jenkins
+    
+    - name: 12/15 - Copy over cloned Jenkins /var/lib/jenkins
       copy:
         remote_src: yes
         src: /tmp/jenkins/jenkins
         dest: /var/lib
-    - name: Restore jenkins user ownership on /var/lib/jenkins
+        
+         
+    - name: 13/15 - Restore jenkins user ownership on /var/lib/jenkins
       file:
         path: /var/lib/jenkins
         state: directory
         recurse: yes
         owner: jenkins
-    - name: Start Jenkins
+
+    - name: 14/15 - Start Jenkins
       service:
         name: jenkins
         state: started
         enabled: yes
-    - name: Wait until Jenkins is up
-      shell: result_first=1; while [[ $result_first != 0 ]]; do if [[ `grep 'jenkins is fully up and running' /var/log/jenkins/jenkins.log`]]; then result_first=0; else sleep 4; fi; done
+
+    - name: 15/15 - Wait until Jenkins is up
+      uri:
+        url: "http://127.0.0.1:8080"
+        status_code: 403
       register: result
-      until: result.rc == 0
+      until: result.status == 403
+      retries: 60
+      delay: 1
