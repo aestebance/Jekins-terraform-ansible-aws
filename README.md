@@ -7,7 +7,7 @@ With this project you can deploy **Jenkins** in **AWS** (EC2) with **terraform**
 - Boto3
 - Terraform
 - Ansible
-- An AWS account with administrator privileges and custom domain in Route 53 hosted zone.
+- An AWS account with administrator privileges and custom domain in Route53 hosted zone.
 
 ## Installing
 - Create a S3 bucket in your AWS account.
@@ -22,13 +22,13 @@ With this project you can deploy **Jenkins** in **AWS** (EC2) with **terraform**
 
 ## Deploying
  ```
- - terraform init
+ terraform init
  ```
  ```
- - terraform plan
+ terraform plan
  ```
  ```
- - terraform apply
+ terraform apply
  ```
 
  ## Login in jenkins
